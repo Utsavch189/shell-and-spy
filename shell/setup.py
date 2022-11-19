@@ -15,5 +15,5 @@ setup(
     version = "0.1",
     description = "shell",
     options = {"build_exe": build_exe_options},
-    executables = [Executable("shell.py", base=base)]
+    executables = [Executable("shell.py", base='Console')]
 )
