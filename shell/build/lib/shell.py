@@ -11,7 +11,7 @@ db=client['shell']
 
 MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','mkdir','rmdir','updatefile','disks','encrypt','decrypt']
 
-CWD=""
+CWD=r""
 LAST_PATH=""
 TARGET=""
 IP=""
@@ -29,6 +29,21 @@ def getTargetMachine():
     else:
         TARGET='None'
         IP='None'
+
+def operation():
+    global CWD
+    leng=len(CWD)-1
+    arr=[]
+    while leng>=1:
+       if CWD[leng]=='\\':
+            break
+       arr.append(leng)
+       leng=leng-1 
+    strr=""
+    arr=sorted(arr)    
+    for i in arr:
+        strr=strr+CWD[i]
+    CWD=CWD.replace(strr,"")
 
 def clearCollection():
     global TARGET
@@ -66,12 +81,18 @@ def is_directory_change_command():
     global CWD
     global LAST_PATH
     a= (PREV_COMMAND.split(" "))
- 
+
     if a[0]=='cd':
+        if (a[1])[0]=='\\':
+            print(">>> ")
+            print("invalid navigate")
+        else:
+            if CWD and CWD[len(CWD)-1]!='\\':
+                a[1]='\\'+a[1]
             CWD=CWD+f'{a[1]}'
             LAST_PATH=f'{a[1]}'
     elif a[0]=='cd..':
-            CWD=CWD.replace(LAST_PATH,"")
+            operation()
 
 
 def ActionUploader():

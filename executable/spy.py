@@ -35,8 +35,9 @@ def upload(data):
 
 
 def imageReader(path,file):
-    images = ([cv2.imread(file) for file in glob.glob(f'{path}/{file}')])
-    a=np.array(images[0])
+    images = cv2.imread(f'{path}\\{file}')
+    img=cv2.resize(np.array(images),(500,400))
+    a=np.array(img)
     return a.tolist()
 
 def action_on_system(new_path="",command="",original_filename="",update_str="",new_foldername="",new_filename="",path=""):
