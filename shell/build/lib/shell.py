@@ -123,6 +123,9 @@ def is_directory_change_command():
     a= (PREV_COMMAND.split(" "))
 
     if a[0]=='cd':
+        if a[1] in ['C:\\','D:\\','E:\\','F:\\','G:\\','H:\\']:
+            CWD=a[1]
+            PREV_COMMAND=a[1]
         if (a[1])[0]=='\\':
             print(Fore.CYAN+">>> ")
             print("invalid navigate")

