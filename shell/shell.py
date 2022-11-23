@@ -3,6 +3,9 @@ import json
 from PIL import Image as im
 import numpy as np
 import requests
+from colorama import Fore,init
+
+init(autoreset=True)
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
@@ -41,15 +44,15 @@ def targetInfo():
             f"Longitude --> {lon}",
             f"Internet Service Provider --> {isp}"
             ]
-            print(">>> ")
+            print(Fore.CYAN+">>> ")
             for i in location_data:
                 print(i)
             print()
         except:
-            print(">>> ")
+            print(Fore.CYAN+">>> ")
             print("Something went wrong!!!")
     else:
-        print(">>> ")
+        print(Fore.CYAN+">>> ")
         print("No Public IP Found!!!")
         
     
@@ -121,7 +124,7 @@ def is_directory_change_command():
 
     if a[0]=='cd':
         if (a[1])[0]=='\\':
-            print(">>> ")
+            print(Fore.CYAN+">>> ")
             print("invalid navigate")
         else:
             if CWD and CWD[len(CWD)-1]!='\\':
@@ -138,7 +141,7 @@ def ActionUploader():
     col=db['myshell']
 
     if a[0]=='commands' and len(a)==1:
-        print(">>> ")
+        print(Fore.CYAN+">>> ")
         for i in MY_COMMANDS:
             print(i)
         print()
@@ -240,7 +243,7 @@ def ActionUploader():
 
 
 def display(res):
-    print(">>> ")
+    print(Fore.CYAN+">>> ")
     if(type(json.loads(res['result']))==list):
         for i in (json.loads(res['result'])):
             print(i)
@@ -270,7 +273,10 @@ def shell():
     global TARGET,IP
     getTargetMachine()
     while True:
-        shell_struct=f"({TARGET}-->{IP}@root)-[{CWD}]\n$ "
+        struct0=(Fore.LIGHTYELLOW_EX+CWD)
+        struct1=(Fore.LIGHTGREEN_EX+f"(target@{TARGET})-->IP: {IP}-[{struct0}]\n")
+        struct2=(Fore.CYAN+"$ ")
+        shell_struct=struct0+struct1+struct2
         command=str(input(shell_struct))
         PREV_COMMAND=(command)
         is_directory_change_command()
