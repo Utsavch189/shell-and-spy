@@ -208,7 +208,7 @@ def action_take(listen):
             if x:
                 col.delete_one(filters)
             decrypt(private_key=(str_to_byte(x['key'])),paths=cwd,file=target_element)
-        elif action=='getimg':
+        elif action=='showimg':
             target_element=listen['target_element']
             data={
                 "hostname":hostname,
