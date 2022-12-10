@@ -75,16 +75,21 @@ def targetInfo():
         print("No Public IP Found!!!")
         
 def getAllTargets():
+    global TARGET
     col=db['systemInfo']
     res=col.find()
     print()
-    print("TARGETS: ")
+    print(Fore.BLUE+Style.BRIGHT+"\tTARGETS: ")
     print()
-    print("\t| Hostname |\tIP")
-    print("\t-----------------------------")
+    print(Fore.LIGHTBLUE_EX+Style.BRIGHT+"\t| Hostname |\tIP")
+    print(Fore.BLUE+Style.BRIGHT+"\t-----------------------------")
     for i in res:
-        print(f"\t| {i['hostname']} |\t{i['ip']}")
-        print("\t-----------------------------") 
+        if i['hostname']==TARGET:
+            print(Fore.MAGENTA+Style.BRIGHT+f"\t| {i['hostname']} |\t{i['ip']}   <-- Current")
+            print(Fore.BLUE+Style.BRIGHT+"\t-----------------------------")
+        else:
+            print(Fore.GREEN+Style.BRIGHT+f"\t| {i['hostname']} |\t{i['ip']}")
+            print(Fore.BLUE+Style.BRIGHT+"\t-----------------------------") 
     print()
 
 def getTargetMachine(target=""):
@@ -587,8 +592,8 @@ def shell():
     global CWD
     global PREV_COMMAND
     global TARGET,IP
-    getAllTargets()
     getTargetMachine()
+    getAllTargets()
     while True:
         internet=has_active_internet()
         struct0=(Fore.LIGHTYELLOW_EX+f"~\{CWD}")
