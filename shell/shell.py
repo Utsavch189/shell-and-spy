@@ -538,7 +538,7 @@ def ActionUploader():
 
     elif a[0]=='getalltypefiles':
         target_element=target_strings(a,1)
-        FILENAME=target_string(a,1)
+        FILENAME=target_strings(a,1)
         data={
                 "action":a[0],
                 "target":TARGET,
