@@ -97,6 +97,7 @@ def check_online():
         res=col.find()
         times=datetime.datetime.now()
         minute=times.minute
+        hour=times.hour
         if STOP:
             break
         today=date.today()
@@ -110,7 +111,7 @@ def check_online():
             new_arry=arry[1].split(":")
             if(i['hostname']==TARGET):
                 STATUS=i['status']
-            if ((int(minute) > int(new_arry[1]) and strr==arry[0]) or (strr!=arry[0])):
+            if (int(minute) > int(new_arry[1]) and strr==arry[0] and int(new_arry[0])==int(hour)) or strr!=arry[0]:
                 filters={
                 "hostname":i['hostname']
                 }
@@ -123,7 +124,7 @@ def check_online():
                     col.update_one(filters,value)
                 except Exception as e:
                     print(e)
-            elif (int(minute) <= int(new_arry[1]) and strr==arry[0]):
+            else:
                 filters={
                 "hostname":i['hostname']
                 }
@@ -661,7 +662,6 @@ def shell():
     global PREV_COMMAND
     global TARGET,IP,STOP,STATUS
     getTargetMachine()
-    getAllTargets()
     while True:
         
         struct0=(Fore.LIGHTYELLOW_EX+f"~\{CWD}")
