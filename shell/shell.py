@@ -688,12 +688,8 @@ def shell():
                     clearCollection()
                     STOP=True
                     break
-                #if STATUS=='Online' or command=='targetlist' or command=='shifttarget' or command=='commands':
                 is_directory_change_command()
                 ActionUploader()
-               #else:
-                    #print(Fore.CYAN+">>> ")
-                    #print(Fore.CYAN+f"Target is Offline mode")
 
         except Exception as e:
                 print(e)
