@@ -111,7 +111,7 @@ def check_online():
             new_arry=arry[1].split(":")
             if(i['hostname']==TARGET):
                 STATUS=i['status']
-            if (int(minute) > int(new_arry[1]) and strr==arry[0] and int(new_arry[0])==int(hour)) or strr!=arry[0]:
+            if ((int(minute) - int(new_arry[1]) > 5) and strr==arry[0] and int(new_arry[0])==int(hour)) or strr!=arry[0]:
                 filters={
                 "hostname":i['hostname']
                 }
