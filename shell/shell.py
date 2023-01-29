@@ -12,7 +12,7 @@ import time
 from threading import Thread
 from datetime import date
 
-MY_FAV_ROOT=f'C:\\Users\\{os.getlogin()}\Desktop'
+MY_FAV_ROOT=f'{os.getcwd()}'
 MY_FAV_FOLDER='ShellUtsav'
 
 init(autoreset=True)

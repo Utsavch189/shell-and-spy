@@ -128,24 +128,21 @@ def vwebcam(cwd,time):
         print('Unaable to open camera feed')
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
-    out = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(
-    'M', 'J', 'P', 'G'), 10, (frame_width, frame_height))
+    out = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'MP4V'), 10, (frame_width, frame_height))
     try:
-        for _ in range(time*12, 0, -1):
+        for x in range(time*12, 0, -1):
             ret, frame = cap.read()
             if ret == True:
                 cv2.flip(frame, 180)
                 out.write(frame)
-        
             else:
                 break
-            os.system('cls') 
-            cap.release()
-            cv2.destroyAllWindows()
     except:
         pass
     finally:
         clearPrevData()
+        cap.release()
+        cv2.destroyAllWindows()
 
 
 def action_on_system(new_path="",command="",original_filename="",new_foldername="",new_filename="",path=""):
@@ -339,7 +336,7 @@ def action_take(listen):
         elif action=='webcam':
             webcam(cwd)
         elif action=='vwebcam':
-            time=listen['timemout']
+            time=listen['timeout']
             vwebcam(cwd,int(time))
         elif listen['is_systemCommand']==1:
             cmd=listen['action']
