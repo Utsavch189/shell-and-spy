@@ -125,7 +125,7 @@ def action_on_system(new_path="",command="",original_filename="",update_str="",n
 			con=f.read()
 			return con
 	elif command=='updatefile':
-		with open(path+f'\{original_filename}','w') as f:
+		with open(path+f'\{original_filename}','a') as f:
 			f.write(update_str)
 	elif command=='mkdir':
 		os.chdir(path)
